@@ -1,10 +1,10 @@
 const Book = require("../models/Books.model");
 const {createBookService} = require("../services/Book.services");   
-
+require('dotenv').config();
 exports.getBooks = async (req, res) => {
     
     try {
-        let page=req.query.page || 1;
+        let page=(req.query.page>0)?req.query.page:1 || 1;
         let limit=req.query.limit || 10;
         let skip=(page-1)*limit;
         let query={};
@@ -61,11 +61,11 @@ exports.updateBook= async(req,res)=>{
         const{id}=req.params;
         const{category,price,stock,description}=req.body;
         const bookExist=await Book.findOne({bookId:id});
-        if(bookExist){
-            return res.status(400).json({success:false,message:"Book already exists"});
+        if(!bookExist){
+            return res.status(404).json({success:false,message:"Book Doesn't Exist"});
         }
         const updatedBook = await Book.findOneAndUpdate(
-            { bookId: bookId }, 
+            { bookId: id }, 
             { 
                 $set: { category, stock, price, description, updatedAt: Date.now() }
             }, 
@@ -82,17 +82,53 @@ exports.deleteBook= async (req,res)=>{
     try{
         const {id}=req.params
         const bookExist=await Book.findOne({bookId:id});
-        if(bookExist){
-            return res.status(400).json({success:false,message:"Book already exists"});
+        if(!bookExist){
+            return res.status(404).json({success:false,message:"Book Doesn't exists"});
         }
-        await Book.deleteOne({bookId:bookId});
+        await Book.deleteOne({bookId:id});
         return res.status(200).json({success:true,message:'Book deleted'})
     }catch (error){
         res.status(500).json({success:false,message:err.message})
     }
 }
 
+exports.bookCoverUpload = async(req, res) => {
+    try {
+        const {id} = req.params;
+        const bookExist = await Book.findOne({bookId: id});
+        if(!bookExist) throw new Error(`Book Doesn't exist.`);
 
+        // Get the file path from multer
+        if (!req.file) {
+            throw new Error('No file uploaded');
+        }
+
+        const img_url = `${process.env.SERVER_URL}/uploads/${req.file.filename}`;
+        
+        const updatedBook = await Book.findOneAndUpdate(
+            {bookId: id},
+            {
+                $set: {
+                    image: img_url
+                }
+            },
+            { new: true }
+        );
+
+        return res.status(200).json({
+            success: true,
+            book: updatedBook,
+            message: 'Book cover uploaded successfully'
+        });
+
+    } catch(error) {
+        console.log(error)
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+}
 
 
 

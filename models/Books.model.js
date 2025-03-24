@@ -6,7 +6,7 @@ const bookSchema = new mongoose.Schema({
     author: String,
     description: String,
     category: String,
-    stocks:Number,
+    stock:Number,
     price:Number,
     image: String,
     createdAt: { type: Date, default: Date.now },

@@ -1,4 +1,4 @@
-const Book = require("../models/Book");
+const Book = require("../models/Books.model");
 
 exports.createBookService = async (data) => {
     try {

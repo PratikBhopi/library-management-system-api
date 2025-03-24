@@ -1,6 +1,6 @@
 const { validationResult } = require('express-validator');
-const User=require('../models/Users.model')
-
+const UserModel=require('../models/Users.model')
+const {createUser}=require('../services/Users.services')
 
 module.exports.registerUser = async (req, res, next) => {
     try {
@@ -11,13 +11,13 @@ module.exports.registerUser = async (req, res, next) => {
 
         const { fullname, email, password } = req.body;
 
-        const findUser = await User.findOne({ email: email })
+        const findUser = await UserModel.findOne({ email: email })
         if (findUser) {
             return res.status(200).json({ message: "User exist." })
         }
 
-        const hashedPassword = await userModel.hashPassword(password);
-        const user = await userService.createUser({
+        const hashedPassword = await UserModel.hashPassword(password);
+        const user = await createUser({
             firstname: fullname.firstname,
             lastname: fullname.lastname,
             email,
@@ -29,7 +29,8 @@ module.exports.registerUser = async (req, res, next) => {
         return res.status(201).json({ token: token, uesr: user });
 
     } catch (error) {
-        return res.status(400).json({ message: "error occured" })
+        console.log(error)
+        return res.status(400).json({ message:error.message })
     }
 }
 
@@ -40,7 +41,7 @@ module.exports.loginUser = async (req, res) => {
             return res.status(400).json({ errors: errors.array() });
         }
         const { password, email } = req.body;
-        const user = await User.findOne({ email: email }).select('+password');
+        const user = await UserModel.findOne({ email: email }).select('+password');
         if (!user) {
             return res.status(404).json({ message: "Invalid email or password" });
         }
@@ -55,6 +56,6 @@ module.exports.loginUser = async (req, res) => {
         return res.status(200).json({ success: "ok", token: token });
 
     } catch (error) {
-        return res.status(400).json({ error: error })
+        return res.status(400).json({ error: 'Internal Server Error' })
     }
 }
