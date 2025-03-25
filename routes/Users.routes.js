@@ -1,8 +1,10 @@
 const express=require('express');
 const router=express.Router();
 const {body}= require('express-validator');
-const userControllers=require('../controllers/Users.controllers');
-// const authMiddleware=require('../middlewares/auth.middlewares')
+const { authMiddleware } = require('../middlewares/auth.middlewares');
+const upload=require('../middlewares/upload.middleware')
+
+router.get('/', userControllers.getUsers);
 
 router.post('/register',[
     body('email').isEmail().withMessage("Invalid Email"),
@@ -15,6 +17,6 @@ router.post('/login',[
     body('password').isLength({min:6}).withMessage('Password must be of 6 Characters')
 ],userControllers.loginUser)
 
-
+router.post('/upload-profile-picture',authMiddleware,upload.single('image'),userControllers.uploadPicture)
 
 module.exports=router;
