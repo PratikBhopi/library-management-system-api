@@ -1,10 +1,11 @@
 const Loan = require("../models/loan.model");
 const { createLoanService } = require("../services/loan.services");
-const Book = require("../models/book.model");
+const Book = require("../models/Books.model");
+const User = require("../models/Users.model");
 
 exports.getLoans = async (req, res) => {
     try {
-        let page = (req.query.page > 0) ? req.query.page : 1 || 1;
+        let page = (req.query.page > 0) ? req.query.page : 1;
         let limit = req.query.limit || 10;
         let skip = (page - 1) * limit;
         let query = {};
@@ -26,15 +27,16 @@ exports.getLoans = async (req, res) => {
         }
 
         const loans = await Loan.find(query)
-            .populate('user', 'name email')
+            .populate('user', 'fullName email')
             .populate('book', 'title author')
             .skip(skip)
             .limit(limit)
             .sort({ createdAt: -1 });
 
-        res.status(200).json({ success: true, loans, totalLoans });
+        return res.status(200).json({ success: true, loans, totalLoans });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        console.log(error)
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -42,28 +44,38 @@ exports.getLoanById = async (req, res) => {
     try {
         const { id } = req.params;
         const loan = await Loan.findById(id)
-            .populate('user', 'name email')
+            .populate('user', 'fullName email')
             .populate('book', 'title author');
 
         if (!loan) {
             return res.status(404).json({ success: false, message: "Loan not found" });
         }
-        res.status(200).json({ success: true, loan });
+        return res.status(200).json({ success: true, loan });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
 exports.createLoan = async (req, res) => {
+    const { bookId } = req.body;
     try {
+        const findBook = await Book.findOne({ bookId: bookId });
+        if (!findBook) throw new Error('Book Does not Exist');
+        
+        if (findBook.stock <= 0) {
+            throw new Error('Book is out of stock');
+        }
+
         const loanData = {
             ...req.body,
-            user: req.user._id // Get user ID from auth middleware
+            user: req.user._id
         };
         const loan = await createLoanService(loanData);
-        res.status(201).json({ success: true, loan });
+        await Book.findOneAndUpdate({ bookId: bookId }, { $inc: { stock: -1 } });
+        return res.status(201).json({ success: true, loan });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -79,21 +91,19 @@ exports.updateLoan = async (req, res) => {
         if (req.body.status === 'returned' && loanExist.status !== 'returned') {
             req.body.returnDate = new Date();
             // Update book stock
-            await Book.findByIdAndUpdate(loanExist.book, {
-                $inc: { stock: 1 }
-            });
+            await Book.findByIdAndUpdate(loanExist.book, { $inc: { stock: 1 } });
         }
 
         const updatedLoan = await Loan.findByIdAndUpdate(
             id,
             { $set: { ...req.body, updatedAt: Date.now() } },
             { new: true }
-        ).populate('user', 'name email')
-            .populate('book', 'title author');
+        ).populate('user', 'fullName email')
+        .populate('book', 'title author');
 
-        res.status(200).json({ success: true, loan: updatedLoan });
+        return res.status(200).json({ success: true, loan: updatedLoan });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -112,9 +122,9 @@ exports.deleteLoan = async (req, res) => {
             });
         }
 
-        // await Loan.findByIdAndDelete(id);
+        await Loan.findByIdAndDelete(id);
         return res.status(200).json({ success: true, message: 'Loan deleted' });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        return res.status(500).json({ success: false, message: error.message });
     }
-}; 
+};

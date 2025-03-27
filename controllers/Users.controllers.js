@@ -63,7 +63,7 @@ module.exports.loginUser = async (req, res) => {
 }
 
 module.exports.uploadPicture = async (req, res) => {
-    const token = req.headers.token.split(' ')[1]
+    const token = req.headers.authorization?.split(' ')[1]
     try {
         const { id } = jwt.verify(token, process.env.JWT_SECRET_KEY);
         const img_url = `${process.env.SERVER_URL}/uploads/${req.file.filename}`;
@@ -109,3 +109,17 @@ module.exports.getUsers = async (req, res) => {
         return res.status(500).json({ success: false, message: error.message });
     }
 };
+
+module.exports.getUserById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const user = await UserModel.findById(id);
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+        return res.status(200).json({ success: true, user });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+

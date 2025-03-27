@@ -3,8 +3,13 @@ const router=express.Router();
 const {body}= require('express-validator');
 const { authMiddleware } = require('../middlewares/auth.middlewares');
 const upload=require('../middlewares/upload.middleware')
+const userControllers=require('../controllers/Users.controllers')
 
-router.get('/', userControllers.getUsers);
+// Get all users with pagination and filtering
+router.get('/', authMiddleware, userControllers.getUsers);
+
+// Get user by ID
+router.get('/:id', authMiddleware, userControllers.getUserById);
 
 router.post('/register',[
     body('email').isEmail().withMessage("Invalid Email"),

@@ -3,12 +3,12 @@ const mongoose = require('mongoose');
 const loanSchema = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'user',  
         required: true
     },
     book: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Book',
+        ref: 'Book',  
         required: true
     },
     borrowDate: {
@@ -38,4 +38,4 @@ loanSchema.index({ user: 1, book: 1 }, { unique: true });
 
 const Loan = mongoose.model('Loan', loanSchema);
 
-module.exports = Loan; 
+module.exports = Loan;
