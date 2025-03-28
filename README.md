@@ -912,15 +912,6 @@ All error responses follow this format:
 - Rating: Number between 1-5
 - Description: Required, non-empty string
 
-### Rate Limiting
-- API endpoints are rate-limited to prevent abuse
-- Default limits:
-  - 100 requests per minute for authenticated users
-  - 30 requests per minute for unauthenticated users
-- Additional headers in response:
-  - X-RateLimit-Limit: Maximum requests per window
-  - X-RateLimit-Remaining: Remaining requests in current window
-  - X-RateLimit-Reset: Time when the rate limit resets
 
 ### Best Practices
 1. Always check the `success` field in responses
